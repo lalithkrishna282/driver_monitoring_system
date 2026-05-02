@@ -2,6 +2,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import datetime
 
+from modules.paths import REPORTS_DIR
+
 
 class FatigueReport:
 
@@ -22,9 +24,10 @@ class FatigueReport:
         avg_score = sum(self.scores) / len(self.scores)
         max_score = max(self.scores)
 
-        filename = "driver_fatigue_report.pdf"
+        REPORTS_DIR.mkdir(exist_ok=True)
+        filename = REPORTS_DIR / "driver_fatigue_report.pdf"
 
-        c = canvas.Canvas(filename, pagesize=letter)
+        c = canvas.Canvas(str(filename), pagesize=letter)
 
         c.setFont("Helvetica", 14)
         c.drawString(200, 750, "Driver Fatigue Report")

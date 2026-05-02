@@ -2,9 +2,13 @@ import face_recognition
 import os
 import cv2
 
+from modules.paths import DRIVERS_DIR
+
 class DriverRecognition:
 
-    def __init__(self, drivers_folder="drivers"):
+    def __init__(self, drivers_folder=None):
+        if drivers_folder is None:
+            drivers_folder = DRIVERS_DIR
         self.drivers_folder = drivers_folder
         self.known_encodings = []
         self.known_names = []

@@ -1,9 +1,13 @@
 import cv2
 import os
 
+from modules.paths import DRIVERS_DIR
+
 class DriverRegistration:
 
-    def __init__(self, save_path="drivers"):
+    def __init__(self, save_path=None):
+        if save_path is None:
+            save_path = DRIVERS_DIR
         self.save_path = save_path
 
         if not os.path.exists(save_path):

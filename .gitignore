@@ -25,7 +25,9 @@ fatigue_log.txt
 logs/
 live_data.csv
 driver_history.csv
+driver_training_data.csv
 drivers/
+reports/
 *.pdf
 
 # Jupyter checkpoints

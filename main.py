@@ -41,9 +41,6 @@ csv_interval = 2  # seconds
 last_db_log_time = time.time()
 last_txt_log_time = time.time()
 BASE_DIR = Path(__file__).resolve().parent
-LIVE_DATA_PATH = BASE_DIR / "live_data.csv"
-DRIVERS_DIR = BASE_DIR / "drivers"
-DRIVER_DB_PATH = BASE_DIR / "driver_fatigue.db"
 
 latest_live_data = {
     "fatigue": 0.0,
@@ -287,7 +284,16 @@ from modules.driver_history import DriverHistory
 from modules.driver_analytics import DriverAnalytics
 from modules.fatigue_forecaster import FatigueForecaster
 from modules.focus_zone import FocusZone
+from modules.paths import (
+    DRIVER_DB_PATH,
+    DRIVERS_DIR,
+    FATIGUE_LOG_PATH,
+    LIVE_DATA_PATH,
+    ensure_runtime_dirs,
+)
 # ---------------- Initialize Detectors ----------------
+
+ensure_runtime_dirs()
 
 perclos_detector = PERCLOSDetector()
 blink_detector = BlinkDetector()
@@ -306,7 +312,7 @@ voice_interval = ALERT_INTERVAL_SECONDS
 current_time = time.time()
 fatigue_engine = FatigueEngine()
 
-fatigue_logger = FatigueLogger()
+fatigue_logger = FatigueLogger(str(FATIGUE_LOG_PATH))
 fatigue_graph = FatigueGraph()
 fatigue_live_graph = FatigueLiveGraph()
 fatigue_dashboard = FatigueDashboard()
@@ -322,8 +328,8 @@ driver_profile = DriverProfile()
 phone_detector = PhoneDetector()
 fatigue_timeline = FatigueTimeline()
 fatigue_report = FatigueReport()
-driver_registration = DriverRegistration()
-driver_recognition = DriverRecognition()
+driver_registration = DriverRegistration(str(DRIVERS_DIR))
+driver_recognition = DriverRecognition(str(DRIVERS_DIR))
 driver_number_map = _build_driver_number_map()
 driver_database = DriverDatabase(str(DRIVER_DB_PATH))
 driver_history = DriverHistory()

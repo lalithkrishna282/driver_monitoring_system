@@ -1,9 +1,13 @@
 import sqlite3
 import time
 
+from modules.paths import DRIVER_DB_PATH
+
 class DriverDatabase:
 
-    def __init__(self, db_path="driver_fatigue.db"):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            db_path = DRIVER_DB_PATH
         self.db_path = db_path
 
         self.conn = sqlite3.connect(self.db_path)

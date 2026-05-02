@@ -2,11 +2,13 @@ import csv
 import os
 import datetime
 
+from modules.paths import DRIVER_HISTORY_PATH
+
 class DriverHistory:
 
-    def __init__(self):
+    def __init__(self, file=None):
 
-        self.file = "driver_history.csv"
+        self.file = file or DRIVER_HISTORY_PATH
 
         if not os.path.exists(self.file):
 

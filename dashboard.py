@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import time
 
-st.title("🚗 Driver Monitoring Dashboard")
+from modules.paths import LIVE_DATA_PATH
+
+st.title("Driver Monitoring Dashboard")
 
 while True:
     try:
-        df = pd.read_csv("live_data.csv")
+        df = pd.read_csv(LIVE_DATA_PATH)
 
         fatigue = int(df["fatigue"][0])
         attention = int(df["attention"][0])

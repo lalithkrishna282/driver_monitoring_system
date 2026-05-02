@@ -1,10 +1,12 @@
 import csv
 import os
 
+from modules.paths import TRAINING_DATA_PATH
+
 class TrainingDataLogger:
 
-    def __init__(self):
-        self.file = "driver_training_data.csv"
+    def __init__(self, file=None):
+        self.file = file or TRAINING_DATA_PATH
 
         if not os.path.exists(self.file):
             with open(self.file, "w", newline="") as f:

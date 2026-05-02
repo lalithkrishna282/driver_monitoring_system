@@ -3,10 +3,14 @@ import cv2
 import numpy as np
 import face_recognition
 
+from modules.paths import DRIVERS_DIR
+
 
 class DriverIdentity:
 
-    def __init__(self, database_path="drivers"):
+    def __init__(self, database_path=None):
+        if database_path is None:
+            database_path = DRIVERS_DIR
         self.database_path = database_path
         self.known_encodings = []
         self.known_names = []

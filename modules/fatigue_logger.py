@@ -1,9 +1,13 @@
 import time
 
+from modules.paths import FATIGUE_LOG_PATH
+
 
 class FatigueLogger:
 
-    def __init__(self, logfile="fatigue_log.txt"):
+    def __init__(self, logfile=None):
+        if logfile is None:
+            logfile = FATIGUE_LOG_PATH
         self.logfile = logfile
 
     def log(self, fatigue_score):
