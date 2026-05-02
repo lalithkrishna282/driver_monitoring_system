@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Driver Monitoring Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111412;
+      --panel: #1c211f;
+      --panel-2: #222925;
+      --text: #f2f5f0;
+      --muted: #a8b2aa;
+      --green: #45d483;
+      --yellow: #ffd166;
+      --red: #ff5c5c;
+      --blue: #55a7ff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 150px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .value {
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 780;
+      margin-bottom: 14px;
+    }
+
+    .bar {
+      height: 12px;
+      overflow: hidden;
+      background: #0d0f0e;
+      border-radius: 999px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      transition: width 240ms ease, background-color 240ms ease;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .detail {
+      background: var(--panel-2);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .detail strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      header,
+      .grid,
+      .details {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        display: block;
+      }
+
+      .status {
+        margin-top: 8px;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Driver Monitoring Dashboard</h1>
+      <div class="status" id="status">Connecting...</div>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <div class="label">Fatigue</div>
+        <div class="value" id="fatigue">0.0</div>
+        <div class="bar"><div class="fill" id="fatigueBar"></div></div>
+      </article>
+
+      <article class="card">
+        <div class="label">Attention</div>
+        <div class="value" id="attention">0.0</div>
+        <div class="bar"><div class="fill" id="attentionBar"></div></div>
+      </article>
+
+      <article class="card">
+        <div class="label">Risk</div>
+        <div class="value" id="risk">0.0</div>
+        <div class="bar"><div class="fill" id="riskBar"></div></div>
+      </article>
+
+      <article class="card wide">
+        <div class="label">Live Trend</div>
+        <canvas id="chart" width="1100" height="220"></canvas>
+        <div class="details">
+          <div class="detail">
+            <span class="label">Driver</span>
+            <strong id="driverName">Unknown</strong>
+          </div>
+          <div class="detail">
+            <span class="label">Driver No.</span>
+            <strong id="driverNumber">0</strong>
+          </div>
+          <div class="detail">
+            <span class="label">Source</span>
+            <strong id="source">csv</strong>
+          </div>
+          <div class="detail">
+            <span class="label">State</span>
+            <strong id="state">Waiting</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const history = [];
+    const maxPoints = 80;
+    const fields = {
+      fatigue: document.getElementById("fatigue"),
+      attention: document.getElementById("attention"),
+      risk: document.getElementById("risk"),
+      fatigueBar: document.getElementById("fatigueBar"),
+      attentionBar: document.getElementById("attentionBar"),
+      riskBar: document.getElementById("riskBar"),
+      driverName: document.getElementById("driverName"),
+      driverNumber: document.getElementById("driverNumber"),
+      source: document.getElementById("source"),
+      state: document.getElementById("state"),
+      status: document.getElementById("status"),
+      chart: document.getElementById("chart")
+    };
+
+    function colorFor(value, inverse = false) {
+      if (inverse) {
+        if (value >= 70) return "var(--green)";
+        if (value >= 45) return "var(--yellow)";
+        return "var(--red)";
+      }
+      if (value < 40) return "var(--green)";
+      if (value < 70) return "var(--yellow)";
+      return "var(--red)";
+    }
+
+    function stateFor(data) {
+      if (data.fatigue >= 70 || data.risk >= 75) return "Critical";
+      if (data.fatigue >= 40 || data.attention < 50) return "Drowsy";
+      return "Alert";
+    }
+
+    function setMetric(name, value, inverse = false) {
+      const numeric = Number(value || 0);
+      fields[name].textContent = numeric.toFixed(1);
+      const bar = fields[`${name}Bar`];
+      bar.style.width = `${Math.max(0, Math.min(100, numeric))}%`;
+      bar.style.backgroundColor = colorFor(numeric, inverse);
+    }
+
+    function drawChart() {
+      const canvas = fields.chart;
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#151916";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i += 1) {
+        const y = (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      const series = [
+        ["fatigue", "#ff5c5c"],
+        ["attention", "#45d483"],
+        ["risk", "#55a7ff"]
+      ];
+
+      for (const [key, color] of series) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        history.forEach((point, index) => {
+          const x = history.length <= 1 ? 0 : (index / (history.length - 1)) * width;
+          const y = height - (Math.max(0, Math.min(100, point[key])) / 100) * height;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+    }
+
+    async function refresh() {
+      try {
+        const response = await fetch("/api/live-data", { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        data.fatigue = Number(data.fatigue || 0);
+        data.attention = Number(data.attention || 0);
+        data.risk = Number(data.risk || 0);
+
+        setMetric("fatigue", data.fatigue);
+        setMetric("attention", data.attention, true);
+        setMetric("risk", data.risk);
+        fields.driverName.textContent = data.driver_name || "Unknown";
+        fields.driverNumber.textContent = data.driver_number ?? 0;
+        fields.source.textContent = data.source || "csv";
+        fields.state.textContent = stateFor(data);
+        fields.status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+        history.push(data);
+        if (history.length > maxPoints) history.shift();
+        drawChart();
+      } catch (error) {
+        fields.status.textContent = `Dashboard error: ${error.message}`;
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>
